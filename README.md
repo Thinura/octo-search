@@ -4,9 +4,9 @@ GitHub search application built with Next.js, Redux Toolkit, and Axios.
 
 ## Requirements
 
-- Node.js: 22.x (via `.nvmrc`)
-- npm: 10.x
-- Yarn: 4.12.x
+- Node.js: 24.13.x (via `.nvmrc`)
+- npm: 11.6.x
+- Bun: 1.2.21
 
 ## Environment
 
@@ -29,18 +29,18 @@ You can copy `.env.example` to `.env.local`.
 ```bash
 nvm use
 
-yarn install
+bun install
 ```
 
 ## Scripts
 
 ```bash
-yarn dev
-yarn build
-yarn start
-yarn lint
-yarn format:check
-yarn format:write
+bun dev
+bun run build
+bun run start
+bun run lint
+bun run format:check
+bun run format:write
 ```
 
 ## Tooling
@@ -50,8 +50,8 @@ yarn format:write
 - ESLint + Prettier with standard settings.
 - Theme toggle using `next-themes` (system/light/dark).
 - Husky hooks:
-  - `pre-commit`: `yarn lint` and `yarn format:check`
-  - `pre-push`: `yarn build`
+  - `pre-commit`: `bun run lint` and `bun run format:check`
+  - `pre-push`: `bun run build`
   - `commit-msg`: commit message linting
 
 ## Folder Structure
