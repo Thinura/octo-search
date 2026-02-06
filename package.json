@@ -2,25 +2,47 @@
   "name": "octo_search",
   "version": "0.1.0",
   "private": true,
+  "author": {
+    "name": "Thinura Kumarasinghe"
+  },
+  "license": "MIT",
+  "packageManager": "yarn@4.12.0",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "format:check": "prettier . --check",
+    "format:write": "prettier . --write",
+    "prepare": "husky"
   },
   "dependencies": {
+    "@reduxjs/toolkit": "2.9.0",
+    "axios": "1.12.2",
     "next": "16.1.6",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "react-redux": "9.2.0"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
+    "@commitlint/cli": "19.8.0",
+    "@commitlint/config-conventional": "19.8.0",
+    "@tailwindcss/postcss": "4",
+    "@types/node": "20",
+    "@types/react": "19",
+    "@types/react-dom": "19",
+    "eslint": "9",
     "eslint-config-next": "16.1.6",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "eslint-config-prettier": "9.1.0",
+    "eslint-plugin-prettier": "5.5.4",
+    "husky": "9",
+    "prettier": "3.6.2",
+    "tailwindcss": "4",
+    "typescript": "5"
+  },
+  "engines": {
+    "node": "22.x",
+    "npm": "10.x",
+    "yarn": "4.12.x"
   }
 }
