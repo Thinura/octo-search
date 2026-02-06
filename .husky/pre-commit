@@ -1,4 +1,4 @@
 #!/usr/bin/env sh
 
-yarn lint
-yarn format:check
+bun run lint
+bun run format:check
