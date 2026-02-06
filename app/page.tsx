@@ -1,17 +1,30 @@
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+
 export default function Home() {
   return (
-    <main className="mx-auto flex min-h-screen max-w-4xl flex-col px-6 py-16">
-      <h1 className="text-3xl font-semibold tracking-tight">Octo Search</h1>
-      <p className="mt-3 text-lg text-zinc-600">
-        Search GitHub users and repositories. Start by typing a username or repo name.
-      </p>
-      <div className="mt-8">
-        <input
-          className="w-full rounded-lg border border-zinc-200 px-4 py-3 text-base outline-none focus:border-zinc-400"
-          placeholder="Search GitHub..."
-          type="text"
-        />
+    <main className="mx-auto flex min-h-screen max-w-5xl flex-col px-6 py-16">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-muted-foreground">Octo Search</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight">
+            Find GitHub users and repositories
+          </h1>
+        </div>
+        <Button variant="secondary">Docs</Button>
       </div>
+
+      <Card className="mt-10">
+        <CardHeader>
+          <CardTitle>Search</CardTitle>
+          <CardDescription>Type a GitHub username or repository name.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3 sm:flex-row">
+          <Input placeholder="Search GitHub..." type="text" />
+          <Button>Search</Button>
+        </CardContent>
+      </Card>
     </main>
   );
 }
