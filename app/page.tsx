@@ -1,6 +1,8 @@
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import ThemeToggle from "@/components/ui/theme-toggle";
+import { cn } from "@/lib/utils/cn";
 
 export default function Home() {
   return (
@@ -12,7 +14,17 @@ export default function Home() {
             Find GitHub users and repositories
           </h1>
         </div>
-        <Button variant="secondary">Docs</Button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <a
+            className={cn(buttonVariants({ variant: "secondary" }))}
+            href="https://docs.github.com/en/rest"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Docs
+          </a>
+        </div>
       </div>
 
       <Card className="mt-10">
