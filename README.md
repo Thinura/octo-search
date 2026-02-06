@@ -47,7 +47,7 @@ app/
   globals.css
 
   (marketing)/
-    page.tsx
+    layout.tsx
 
   (search)/
     page.tsx
