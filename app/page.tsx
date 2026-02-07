@@ -3,8 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import ThemeToggle from "@/components/ui/theme-toggle";
 import { cn } from "@/lib/utils/cn";
+import { useToast } from "@/components/ui/use-toast";
+import { TOAST_DESCRIPTIONS, TOAST_TITLES } from "@/lib/constants/messages";
 
 export default function Home() {
+  const { toast } = useToast();
+
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col px-6 py-16">
       <div className="flex items-center justify-between">
@@ -34,7 +38,16 @@ export default function Home() {
         </CardHeader>
         <CardContent className="flex flex-col gap-3 sm:flex-row">
           <Input placeholder="Search GitHub..." type="text" />
-          <Button>Search</Button>
+          <Button
+            onClick={() =>
+              toast({
+                title: TOAST_TITLES.info,
+                description: TOAST_DESCRIPTIONS.searchNotWired,
+              })
+            }
+          >
+            Search
+          </Button>
         </CardContent>
       </Card>
     </main>
