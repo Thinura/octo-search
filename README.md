@@ -59,19 +59,24 @@ bun run format:write
 ```
 app/
   layout.tsx
-  page.tsx
   providers.tsx
   globals.css
-
-  (marketing)/
-    layout.tsx
 
   (search)/
     page.tsx
 
   users/
-    [login]/
+    [username]/
       page.tsx
+
+  organizations/
+    [username]/
+      page.tsx
+
+  repositories/
+    [owner]/
+      [repo]/
+        page.tsx
 
   repos/
     [owner]/
