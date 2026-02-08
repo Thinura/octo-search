@@ -209,8 +209,8 @@ export default function SearchPageClient({ initialQuery, initialType }: SearchPa
             query: trimmed,
             updatedAt: now,
             totals: {
-              users: nextType === "users" ? nextTotal : 0,
-              organizations: nextType === "organizations" ? nextTotal : 0,
+              users: 0,
+              organizations: 0,
               repositories:
                 nextType === "repositories"
                   ? repoItems.length > 0
