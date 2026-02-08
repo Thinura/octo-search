@@ -14,9 +14,13 @@ function buildTargetUrl(request: NextRequest, path: string[]) {
 
 async function proxyRequest(request: NextRequest, path: string[]) {
   const targetUrl = buildTargetUrl(request, path);
-  const headers = new Headers(request.headers);
+  const headers = new Headers();
   headers.set("Accept", "application/vnd.github+json");
   headers.set("X-GitHub-Api-Version", "2022-11-28");
+  const contentType = request.headers.get("content-type");
+  if (contentType) {
+    headers.set("Content-Type", contentType);
+  }
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);
   }

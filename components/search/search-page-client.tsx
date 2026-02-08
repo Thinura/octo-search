@@ -161,7 +161,6 @@ export default function SearchPageClient({ initialQuery, initialType }: SearchPa
 
       try {
         const perPage = 12;
-        const shouldFetchCounts = !cacheValid || !activeCache.hasTotals;
 
         const resultsPromise = fetch(
           `/api/search?q=${encodeURIComponent(
@@ -169,53 +168,20 @@ export default function SearchPageClient({ initialQuery, initialType }: SearchPa
           )}&type=${nextType}&page=1&per_page=${perPage}`,
         ).then((res) => res.json() as Promise<ApiResponse<UserCardData | RepoCardData>>);
 
-        let usersMeta: ApiResponse<UserCardData>;
-        let orgsMeta: ApiResponse<UserCardData>;
-        let reposMeta: ApiResponse<RepoCardData>;
-        if (shouldFetchCounts) {
-          [usersMeta, orgsMeta, reposMeta] = await Promise.all([
-            fetch(`/api/search?q=${encodeURIComponent(trimmed)}&type=users&page=1&per_page=1`).then(
-              (res) => res.json() as Promise<ApiResponse<UserCardData>>,
-            ),
-            fetch(
-              `/api/search?q=${encodeURIComponent(trimmed)}&type=organizations&page=1&per_page=1`,
-            ).then((res) => res.json() as Promise<ApiResponse<UserCardData>>),
-            fetch(
-              `/api/search?q=${encodeURIComponent(trimmed)}&type=repositories&page=1&per_page=1`,
-            ).then((res) => res.json() as Promise<ApiResponse<RepoCardData>>),
-          ]);
-        } else {
-          usersMeta = {
-            items: [],
-            total_count: activeCache.totals.users,
-            page: 1,
-          };
-          orgsMeta = {
-            items: [],
-            total_count: activeCache.totals.organizations,
-            page: 1,
-          };
-          reposMeta = {
-            items: [],
-            total_count: activeCache.totals.repositories,
-            page: 1,
-          };
-        }
         const results = await resultsPromise;
 
-        if (usersMeta.error || orgsMeta.error || reposMeta.error || results.error) {
-          throw new Error(
-            results.error ??
-              usersMeta.error ??
-              orgsMeta.error ??
-              reposMeta.error ??
-              "Failed to load results.",
-          );
+        if (results.error) {
+          throw new Error(results.error ?? "Failed to load results.");
         }
 
-        setUsersTotal(usersMeta.total_count ?? 0);
-        setOrganizationsTotal(orgsMeta.total_count ?? 0);
-        setRepositoriesTotal(reposMeta.total_count ?? 0);
+        const nextTotal = results.total_count ?? 0;
+        if (nextType === "repositories") {
+          setRepositoriesTotal(nextTotal);
+        } else if (nextType === "organizations") {
+          setOrganizationsTotal(nextTotal);
+        } else {
+          setUsersTotal(nextTotal);
+        }
 
         if (nextType === "repositories") {
           const repoItems = results.items as RepoCardData[];
@@ -243,12 +209,14 @@ export default function SearchPageClient({ initialQuery, initialType }: SearchPa
             query: trimmed,
             updatedAt: now,
             totals: {
-              users: usersMeta.total_count ?? 0,
-              organizations: orgsMeta.total_count ?? 0,
+              users: nextType === "users" ? nextTotal : 0,
+              organizations: nextType === "organizations" ? nextTotal : 0,
               repositories:
-                repoItems.length > 0
-                  ? (reposMeta.total_count ?? repoItems.length)
-                  : finalItems.length,
+                nextType === "repositories"
+                  ? repoItems.length > 0
+                    ? nextTotal
+                    : finalItems.length
+                  : 0,
             },
             hasTotals: true,
             results: {
@@ -281,14 +249,14 @@ export default function SearchPageClient({ initialQuery, initialType }: SearchPa
             updatedAt: now,
             totals: {
               users:
-                nextType === "users" && userItems.length === 0
-                  ? finalItems.length
-                  : (usersMeta.total_count ?? userItems.length),
+                nextType === "users" ? (userItems.length === 0 ? finalItems.length : nextTotal) : 0,
               organizations:
-                nextType === "organizations" && userItems.length === 0
-                  ? finalItems.length
-                  : (orgsMeta.total_count ?? userItems.length),
-              repositories: reposMeta.total_count ?? 0,
+                nextType === "organizations"
+                  ? userItems.length === 0
+                    ? finalItems.length
+                    : nextTotal
+                  : 0,
+              repositories: 0,
             },
             hasTotals: true,
             results: {

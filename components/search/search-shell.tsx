@@ -74,7 +74,7 @@ export default function SearchShell({
       force?: boolean,
     ) => {
       event?.preventDefault();
-      if (!force && document.activeElement !== inputRef.current) {
+      if (!force && event && "key" in event && document.activeElement !== inputRef.current) {
         return;
       }
       const trimmed = query.trim();
