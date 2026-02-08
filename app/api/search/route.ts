@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { fetchGitHub } from "@/lib/github/server";
+import { SEARCH_TYPES } from "@/lib/constants/search";
 import { normalizeSearchType } from "@/lib/search/types";
 import { normalizeSearchUserItem } from "@/lib/github/normalize";
 
@@ -18,7 +19,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    if (type === "repositories") {
+    if (type === SEARCH_TYPES.REPOSITORIES) {
       const data = await fetchGitHub<{ items: unknown[]; total_count: number }>(
         "/search/repositories",
         {
@@ -35,7 +36,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ ...data, page });
     }
 
-    const usersQuery = type === "organizations" ? `${query} type:org` : query;
+    const usersQuery = type === SEARCH_TYPES.ORGANIZATIONS ? `${query} type:org` : query;
     const data = await fetchGitHub<{ items: Array<Record<string, unknown>>; total_count: number }>(
       "/search/users",
       {

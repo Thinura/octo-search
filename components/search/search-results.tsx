@@ -4,10 +4,12 @@ import * as React from "react";
 import RepoCard, { RepoCardData } from "@/components/search/repo-card";
 import UserCard, { UserCardData } from "@/components/search/user-card";
 import Skeleton from "@mui/material/Skeleton";
+import { SEARCH_TYPES } from "@/lib/constants/search";
+import type { SearchType } from "@/lib/search/types";
 
 type SearchResultsProps = {
   query: string;
-  type: "users" | "organizations" | "repositories";
+  type: SearchType;
   perPage: number;
   totalCount: number;
   initialUsers: UserCardData[];
@@ -59,7 +61,7 @@ export default function SearchResults({
         throw new Error(data.error ?? "Failed to load results.");
       }
 
-      if (type === "repositories") {
+      if (type === SEARCH_TYPES.REPOSITORIES) {
         setRepos((prev) => [...prev, ...(data.items as RepoCardData[])]);
       } else {
         setUsers((prev) => [...prev, ...(data.items as UserCardData[])]);
@@ -102,7 +104,11 @@ export default function SearchResults({
   }, [hasMore, isLoading, loadMore]);
 
   const title =
-    type === "organizations" ? "Organizations" : type === "repositories" ? "Repositories" : "Users";
+    type === SEARCH_TYPES.ORGANIZATIONS
+      ? "Organizations"
+      : type === SEARCH_TYPES.REPOSITORIES
+        ? "Repositories"
+        : "Users";
 
   return (
     <section className="space-y-3">
@@ -123,7 +129,7 @@ export default function SearchResults({
         </div>
       ) : null}
 
-      {type === "repositories" ? (
+      {type === SEARCH_TYPES.REPOSITORIES ? (
         repos.length === 0 ? (
           <p className="text-sm text-muted-foreground">No repositories found.</p>
         ) : (
@@ -135,7 +141,7 @@ export default function SearchResults({
         )
       ) : users.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          {type === "organizations" ? "No organizations found." : "No users found."}
+          {type === SEARCH_TYPES.ORGANIZATIONS ? "No organizations found." : "No users found."}
         </p>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
@@ -143,7 +149,7 @@ export default function SearchResults({
             <UserCard
               key={user.username}
               user={user}
-              entityType={type === "organizations" ? "org" : "user"}
+              entityType={type === SEARCH_TYPES.ORGANIZATIONS ? "org" : "user"}
             />
           ))}
         </div>

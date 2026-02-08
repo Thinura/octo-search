@@ -3,13 +3,15 @@
 import RepoCard, { RepoCardData } from "@/components/search/repo-card";
 import UserCard, { UserCardData } from "@/components/search/user-card";
 import type { FavoriteItem } from "@/features/favorites/slice";
+import { SEARCH_TYPES } from "@/lib/constants/search";
+import type { SearchType } from "@/lib/search/types";
 import Skeleton from "@mui/material/Skeleton";
 
 type FavoritesListProps = {
   users?: Extract<FavoriteItem, { kind: "user" }>[];
   orgs?: Extract<FavoriteItem, { kind: "org" }>[];
   repos?: Extract<FavoriteItem, { kind: "repo" }>[];
-  activeType?: "users" | "organizations" | "repositories" | "all";
+  activeType?: SearchType | "all";
   isLoading?: boolean;
   selectionEnabled?: boolean;
   selectedIds?: string[];
@@ -26,14 +28,25 @@ export default function FavoritesList({
   selectedIds = [],
   onToggleSelect,
 }: FavoritesListProps) {
+  const selectedSet = new Set(selectedIds);
+  const toNumericId = (value: string) => {
+    const parsed = Number(value.split(":")[1] ?? value);
+    if (!Number.isNaN(parsed)) return parsed;
+    let hash = 0;
+    for (let i = 0; i < value.length; i += 1) {
+      hash = (hash * 31 + value.charCodeAt(i)) | 0;
+    }
+    return Math.abs(hash) || 1;
+  };
+
   if (isLoading) {
     const sections =
       activeType === "all"
         ? ["Users", "Organizations", "Repositories"]
         : [
-            activeType === "users"
+            activeType === SEARCH_TYPES.USERS
               ? "Users"
-              : activeType === "organizations"
+              : activeType === SEARCH_TYPES.ORGANIZATIONS
                 ? "Organizations"
                 : "Repositories",
           ];
@@ -59,7 +72,7 @@ export default function FavoritesList({
 
   return (
     <div className="space-y-8">
-      {activeType === "users" || activeType === "all" ? (
+      {activeType === SEARCH_TYPES.USERS || activeType === "all" ? (
         <section className="space-y-3">
           <h2 className="text-lg font-semibold">Users</h2>
           {users.length === 0 ? (
@@ -67,15 +80,15 @@ export default function FavoritesList({
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {users.map((item) => {
-                const numericId = Number(item.id.split(":")[1] ?? item.id);
+                const numericId = toNumericId(item.id);
                 const user: UserCardData = {
-                  id: Number.isNaN(numericId) ? 0 : numericId,
+                  id: numericId,
                   username: item.username,
                   avatar_url: item.avatarUrl,
                   html_url: item.htmlUrl,
                 };
 
-                const isSelected = selectedIds.includes(item.id);
+                const isSelected = selectedSet.has(item.id);
                 return (
                   <div
                     key={item.id}
@@ -90,7 +103,7 @@ export default function FavoritesList({
                           <input
                             type="checkbox"
                             className="h-4 w-4 accent-foreground"
-                            checked={selectedIds.includes(item.id)}
+                            checked={selectedSet.has(item.id)}
                             onChange={() => onToggleSelect?.(item.id)}
                             aria-label={`Select ${item.username}`}
                           />
@@ -105,7 +118,7 @@ export default function FavoritesList({
         </section>
       ) : null}
 
-      {activeType === "organizations" || activeType === "all" ? (
+      {activeType === SEARCH_TYPES.ORGANIZATIONS || activeType === "all" ? (
         <section className="space-y-3">
           <h2 className="text-lg font-semibold">Organizations</h2>
           {orgs.length === 0 ? (
@@ -113,15 +126,15 @@ export default function FavoritesList({
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {orgs.map((item) => {
-                const numericId = Number(item.id.split(":")[1] ?? item.id);
+                const numericId = toNumericId(item.id);
                 const user: UserCardData = {
-                  id: Number.isNaN(numericId) ? 0 : numericId,
+                  id: numericId,
                   username: item.username,
                   avatar_url: item.avatarUrl,
                   html_url: item.htmlUrl,
                 };
 
-                const isSelected = selectedIds.includes(item.id);
+                const isSelected = selectedSet.has(item.id);
                 return (
                   <div
                     key={item.id}
@@ -137,7 +150,7 @@ export default function FavoritesList({
                           <input
                             type="checkbox"
                             className="h-4 w-4 accent-foreground"
-                            checked={selectedIds.includes(item.id)}
+                            checked={selectedSet.has(item.id)}
                             onChange={() => onToggleSelect?.(item.id)}
                             aria-label={`Select ${item.username}`}
                           />
@@ -152,7 +165,7 @@ export default function FavoritesList({
         </section>
       ) : null}
 
-      {activeType === "repositories" || activeType === "all" ? (
+      {activeType === SEARCH_TYPES.REPOSITORIES || activeType === "all" ? (
         <section className="space-y-3">
           <h2 className="text-lg font-semibold">Repositories</h2>
           {repos.length === 0 ? (
@@ -160,16 +173,16 @@ export default function FavoritesList({
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {repos.map((item) => {
-                const numericId = Number(item.id.split(":")[1] ?? item.id);
+                const numericId = toNumericId(item.id);
                 const repo: RepoCardData = {
-                  id: Number.isNaN(numericId) ? 0 : numericId,
+                  id: numericId,
                   full_name: item.fullName,
                   description: item.description,
                   html_url: item.htmlUrl,
                   stargazers_count: item.stars,
                 };
 
-                const isSelected = selectedIds.includes(item.id);
+                const isSelected = selectedSet.has(item.id);
                 return (
                   <div
                     key={item.id}
@@ -184,7 +197,7 @@ export default function FavoritesList({
                           <input
                             type="checkbox"
                             className="h-4 w-4 accent-foreground"
-                            checked={selectedIds.includes(item.id)}
+                            checked={selectedSet.has(item.id)}
                             onChange={() => onToggleSelect?.(item.id)}
                             aria-label={`Select ${item.fullName}`}
                           />

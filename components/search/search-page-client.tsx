@@ -7,6 +7,8 @@ import SearchResults from "@/components/search/search-results";
 import Skeleton from "@mui/material/Skeleton";
 import type { RepoCardData } from "@/components/search/repo-card";
 import type { UserCardData } from "@/components/search/user-card";
+import { CACHE_TTL_MS } from "@/lib/constants/cache";
+import { SEARCH_TYPES } from "@/lib/constants/search";
 import { normalizeSearchType, type SearchType } from "@/lib/search/types";
 
 type SearchPageClientProps = {
@@ -20,8 +22,6 @@ type ApiResponse<T> = {
   page: number;
   error?: string;
 };
-
-const CACHE_TTL_MS = 3 * 60 * 1000;
 
 type CachedResult = {
   items: UserCardData[] | RepoCardData[];
@@ -128,9 +128,9 @@ export default function SearchPageClient({ initialQuery, initialType }: SearchPa
       const cached = cacheValid ? activeCache.results[nextType] : undefined;
       if (cacheValid && cached) {
         const totalForType =
-          nextType === "repositories"
+          nextType === SEARCH_TYPES.REPOSITORIES
             ? activeCache.totals.repositories
-            : nextType === "organizations"
+            : nextType === SEARCH_TYPES.ORGANIZATIONS
               ? activeCache.totals.organizations
               : activeCache.totals.users;
         const cacheHasMeaningfulData =
@@ -141,7 +141,7 @@ export default function SearchPageClient({ initialQuery, initialType }: SearchPa
             setOrganizationsTotal(activeCache.totals.organizations);
             setRepositoriesTotal(activeCache.totals.repositories);
           }
-          if (nextType === "repositories") {
+          if (nextType === SEARCH_TYPES.REPOSITORIES) {
             setRepos(cached.items as RepoCardData[]);
             setUsers([]);
           } else {
@@ -161,7 +161,6 @@ export default function SearchPageClient({ initialQuery, initialType }: SearchPa
 
       try {
         const perPage = 12;
-        const shouldFetchCounts = !cacheValid || !activeCache.hasTotals;
 
         const resultsPromise = fetch(
           `/api/search?q=${encodeURIComponent(
@@ -169,55 +168,22 @@ export default function SearchPageClient({ initialQuery, initialType }: SearchPa
           )}&type=${nextType}&page=1&per_page=${perPage}`,
         ).then((res) => res.json() as Promise<ApiResponse<UserCardData | RepoCardData>>);
 
-        let usersMeta: ApiResponse<UserCardData>;
-        let orgsMeta: ApiResponse<UserCardData>;
-        let reposMeta: ApiResponse<RepoCardData>;
-        if (shouldFetchCounts) {
-          [usersMeta, orgsMeta, reposMeta] = await Promise.all([
-            fetch(`/api/search?q=${encodeURIComponent(trimmed)}&type=users&page=1&per_page=1`).then(
-              (res) => res.json() as Promise<ApiResponse<UserCardData>>,
-            ),
-            fetch(
-              `/api/search?q=${encodeURIComponent(trimmed)}&type=organizations&page=1&per_page=1`,
-            ).then((res) => res.json() as Promise<ApiResponse<UserCardData>>),
-            fetch(
-              `/api/search?q=${encodeURIComponent(trimmed)}&type=repositories&page=1&per_page=1`,
-            ).then((res) => res.json() as Promise<ApiResponse<RepoCardData>>),
-          ]);
-        } else {
-          usersMeta = {
-            items: [],
-            total_count: activeCache.totals.users,
-            page: 1,
-          };
-          orgsMeta = {
-            items: [],
-            total_count: activeCache.totals.organizations,
-            page: 1,
-          };
-          reposMeta = {
-            items: [],
-            total_count: activeCache.totals.repositories,
-            page: 1,
-          };
-        }
         const results = await resultsPromise;
 
-        if (usersMeta.error || orgsMeta.error || reposMeta.error || results.error) {
-          throw new Error(
-            results.error ??
-              usersMeta.error ??
-              orgsMeta.error ??
-              reposMeta.error ??
-              "Failed to load results.",
-          );
+        if (results.error) {
+          throw new Error(results.error ?? "Failed to load results.");
         }
 
-        setUsersTotal(usersMeta.total_count ?? 0);
-        setOrganizationsTotal(orgsMeta.total_count ?? 0);
-        setRepositoriesTotal(reposMeta.total_count ?? 0);
+        const nextTotal = results.total_count ?? 0;
+        if (nextType === SEARCH_TYPES.REPOSITORIES) {
+          setRepositoriesTotal(nextTotal);
+        } else if (nextType === SEARCH_TYPES.ORGANIZATIONS) {
+          setOrganizationsTotal(nextTotal);
+        } else {
+          setUsersTotal(nextTotal);
+        }
 
-        if (nextType === "repositories") {
+        if (nextType === SEARCH_TYPES.REPOSITORIES) {
           const repoItems = results.items as RepoCardData[];
           const fallback =
             repoItems.length === 0
@@ -243,12 +209,14 @@ export default function SearchPageClient({ initialQuery, initialType }: SearchPa
             query: trimmed,
             updatedAt: now,
             totals: {
-              users: usersMeta.total_count ?? 0,
-              organizations: orgsMeta.total_count ?? 0,
+              users: 0,
+              organizations: 0,
               repositories:
-                repoItems.length > 0
-                  ? (reposMeta.total_count ?? repoItems.length)
-                  : finalItems.length,
+                nextType === SEARCH_TYPES.REPOSITORIES
+                  ? repoItems.length > 0
+                    ? nextTotal
+                    : finalItems.length
+                  : 0,
             },
             hasTotals: true,
             results: {
@@ -281,14 +249,18 @@ export default function SearchPageClient({ initialQuery, initialType }: SearchPa
             updatedAt: now,
             totals: {
               users:
-                nextType === "users" && userItems.length === 0
-                  ? finalItems.length
-                  : (usersMeta.total_count ?? userItems.length),
+                nextType === SEARCH_TYPES.USERS
+                  ? userItems.length === 0
+                    ? finalItems.length
+                    : nextTotal
+                  : 0,
               organizations:
-                nextType === "organizations" && userItems.length === 0
-                  ? finalItems.length
-                  : (orgsMeta.total_count ?? userItems.length),
-              repositories: reposMeta.total_count ?? 0,
+                nextType === SEARCH_TYPES.ORGANIZATIONS
+                  ? userItems.length === 0
+                    ? finalItems.length
+                    : nextTotal
+                  : 0,
+              repositories: 0,
             },
             hasTotals: true,
             results: {
@@ -333,7 +305,7 @@ export default function SearchPageClient({ initialQuery, initialType }: SearchPa
       const cache = cacheRef.current;
       if (cache.query !== trimmed) return;
       cache.results[type] = {
-        items: type === "repositories" ? state.repos : state.users,
+        items: type === SEARCH_TYPES.REPOSITORIES ? state.repos : state.users,
         page: state.page,
       };
       cache.updatedAt = Date.now();
@@ -342,9 +314,9 @@ export default function SearchPageClient({ initialQuery, initialType }: SearchPa
   );
 
   const totalCount =
-    type === "repositories"
+    type === SEARCH_TYPES.REPOSITORIES
       ? repositoriesTotal
-      : type === "organizations"
+      : type === SEARCH_TYPES.ORGANIZATIONS
         ? organizationsTotal
         : usersTotal;
 
