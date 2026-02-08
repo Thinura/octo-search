@@ -10,6 +10,7 @@ import type { UserCardData } from "@/components/search/user-card";
 import { CACHE_TTL_MS } from "@/lib/constants/cache";
 import { SEARCH_TYPES } from "@/lib/constants/search";
 import { normalizeSearchType, type SearchType } from "@/lib/search/types";
+import { appClient, getApiErrorMessage } from "@/lib/api/client";
 
 type SearchPageClientProps = {
   initialQuery: string;
@@ -161,14 +162,12 @@ export default function SearchPageClient({ initialQuery, initialType }: SearchPa
 
       try {
         const perPage = 12;
-
-        const resultsPromise = fetch(
-          `/api/search?q=${encodeURIComponent(
-            trimmed,
-          )}&type=${nextType}&page=1&per_page=${perPage}`,
-        ).then((res) => res.json() as Promise<ApiResponse<UserCardData | RepoCardData>>);
-
-        const results = await resultsPromise;
+        const { data: results } = await appClient.get<ApiResponse<UserCardData | RepoCardData>>(
+          "/api/search",
+          {
+            params: { q: trimmed, type: nextType, page: 1, per_page: perPage },
+          },
+        );
 
         if (results.error) {
           throw new Error(results.error ?? "Failed to load results.");
@@ -271,7 +270,7 @@ export default function SearchPageClient({ initialQuery, initialType }: SearchPa
         }
       } catch (err) {
         if (runId === runIdRef.current) {
-          setError(err instanceof Error ? err.message : "Failed to load results.");
+          setError(getApiErrorMessage(err, "Failed to load results."));
         }
       } finally {
         if (runId === runIdRef.current) {
