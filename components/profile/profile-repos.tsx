@@ -7,6 +7,7 @@ import SearchShell from "@/components/search/search-shell";
 import Skeleton from "@mui/material/Skeleton";
 import { CACHE_TTL_MS } from "@/lib/constants/cache";
 import { SEARCH_TYPES } from "@/lib/constants/search";
+import { appClient, getApiErrorMessage } from "@/lib/api/client";
 
 type ProfileReposProps = {
   owner: string;
@@ -73,21 +74,26 @@ export default function ProfileRepos({
     setError(null);
     try {
       const nextPage = page + 1;
-      const endpoint =
+      const params =
         mode === "search"
-          ? `/api/search?q=${encodeURIComponent(
-              `${query} ${kind === "org" ? "org" : "user"}:${owner}`,
-            )}&type=${SEARCH_TYPES.REPOSITORIES}&page=${nextPage}&per_page=${perPage}`
-          : `/api/profile-repos?kind=${kind}&name=${encodeURIComponent(
-              owner,
-            )}&page=${nextPage}&per_page=${perPage}`;
-      const response = await fetch(endpoint);
-      const data = (await response.json()) as {
+          ? {
+              q: `${query} ${kind === "org" ? "org" : "user"}:${owner}`,
+              type: SEARCH_TYPES.REPOSITORIES,
+              page: nextPage,
+              per_page: perPage,
+            }
+          : {
+              kind,
+              name: owner,
+              page: nextPage,
+              per_page: perPage,
+            };
+      const { data } = await appClient.get<{
         items?: ApiRepo[];
         total_count?: number;
         error?: string;
-      };
-      if (!response.ok || data.error) {
+      }>(mode === "search" ? "/api/search" : "/api/profile-repos", { params });
+      if (data.error) {
         throw new Error(data.error ?? "Failed to load repositories.");
       }
       const nextItems = data.items ?? [];
@@ -113,7 +119,7 @@ export default function ProfileRepos({
       setPage(nextPage);
       setHasMore(nextItems.length >= perPage);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load repositories.");
+      setError(getApiErrorMessage(err, "Failed to load repositories."));
     } finally {
       setIsLoading(false);
     }
@@ -161,18 +167,20 @@ export default function ProfileRepos({
       setMode("search");
       setError(null);
       try {
-        const response = await fetch(
-          `/api/search?q=${encodeURIComponent(
-            `${trimmed} ${kind === "org" ? "org" : "user"}:${owner}`,
-          )}&type=${SEARCH_TYPES.REPOSITORIES}&page=1&per_page=${perPage}`,
-          { signal: controller.signal },
-        );
-        const data = (await response.json()) as {
+        const { data } = await appClient.get<{
           items?: ApiRepo[];
           total_count?: number;
           error?: string;
-        };
-        if (!response.ok || data.error) {
+        }>("/api/search", {
+          params: {
+            q: `${trimmed} ${kind === "org" ? "org" : "user"}:${owner}`,
+            type: SEARCH_TYPES.REPOSITORIES,
+            page: 1,
+            per_page: perPage,
+          },
+          signal: controller.signal,
+        });
+        if (data.error) {
           throw new Error(data.error ?? "Failed to search repositories.");
         }
         const items = data.items ?? [];
@@ -196,7 +204,7 @@ export default function ProfileRepos({
         };
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
-          setError(err instanceof Error ? err.message : "Failed to search repositories.");
+          setError(getApiErrorMessage(err, "Failed to search repositories."));
         }
       } finally {
         setIsLoading(false);

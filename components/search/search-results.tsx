@@ -6,6 +6,7 @@ import UserCard, { UserCardData } from "@/components/search/user-card";
 import Skeleton from "@mui/material/Skeleton";
 import { SEARCH_TYPES } from "@/lib/constants/search";
 import type { SearchType } from "@/lib/search/types";
+import { appClient, getApiErrorMessage } from "@/lib/api/client";
 
 type SearchResultsProps = {
   query: string;
@@ -52,13 +53,14 @@ export default function SearchResults({
 
     try {
       const nextPage = page + 1;
-      const response = await fetch(
-        `/api/search?q=${encodeURIComponent(query)}&type=${type}&page=${nextPage}&per_page=${perPage}`,
+      const { data } = await appClient.get<ApiResponse<UserCardData | RepoCardData>>(
+        "/api/search",
+        {
+          params: { q: query, type, page: nextPage, per_page: perPage },
+        },
       );
-      const data = (await response.json()) as ApiResponse<UserCardData | RepoCardData>;
-
-      if (!response.ok || data.error) {
-        throw new Error(data.error ?? "Failed to load results.");
+      if (data.error) {
+        throw new Error(data.error);
       }
 
       if (type === SEARCH_TYPES.REPOSITORIES) {
@@ -69,7 +71,7 @@ export default function SearchResults({
 
       setPage(nextPage);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load results.");
+      setError(getApiErrorMessage(err, "Failed to load results."));
     } finally {
       setIsLoading(false);
     }
