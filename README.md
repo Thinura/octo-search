@@ -89,6 +89,15 @@ bun run format:write
 - **Client-side search** for responsiveness and live updates (avoids full page reloads per keystroke).
 - App Router simplifies per-route caching and metadata generation.
 
+### Where SSR/SSG Is Used
+
+- **SSR/ISR (Detail pages)**:
+  - `/Users/thinura/Documents/Assignments/octo_search/app/users/[username]/page.tsx` (`fetchGitHub` with `revalidate`)
+  - `/Users/thinura/Documents/Assignments/octo_search/app/organizations/[username]/page.tsx` (`fetchGitHub` with `revalidate`)
+  - `/Users/thinura/Documents/Assignments/octo_search/app/repositories/[owner]/[repo]/page.tsx` (`fetchGitHub` with `revalidate`)
+- **Static/Server rendering (Search route entry)**:
+  - `/Users/thinura/Documents/Assignments/octo_search/app/(search)/page.tsx` (server component that resolves params and renders the client search shell)
+
 ### Component Paths (Why)
 
 - `components/search/` contains search-specific UI (cards, shells, results).
