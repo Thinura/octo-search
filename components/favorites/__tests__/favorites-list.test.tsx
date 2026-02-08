@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import { vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import FavoritesList from "@/components/favorites/favorites-list";
 import type { FavoriteItem } from "@/features/favorites/slice";
 import { SEARCH_TYPES } from "@/lib/constants/search";

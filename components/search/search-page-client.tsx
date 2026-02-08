@@ -11,6 +11,7 @@ import { CACHE_TTL_MS } from "@/lib/constants/cache";
 import { SEARCH_TYPES } from "@/lib/constants/search";
 import { normalizeSearchType, type SearchType } from "@/lib/search/types";
 import { appClient, getApiErrorMessage } from "@/lib/api/client";
+import { localizeRateLimitMessage } from "@/lib/utils/rate-limit";
 
 type SearchPageClientProps = {
   initialQuery: string;
@@ -162,25 +163,83 @@ export default function SearchPageClient({ initialQuery, initialType }: SearchPa
 
       try {
         const perPage = 12;
-        const { data: results } = await appClient.get<ApiResponse<UserCardData | RepoCardData>>(
+        const activeRequest = appClient.get<ApiResponse<UserCardData | RepoCardData>>(
           "/api/search",
           {
             params: { q: trimmed, type: nextType, page: 1, per_page: perPage },
           },
         );
 
+        const shouldFetchTotals = !(cacheValid && activeCache.hasTotals);
+        const totalsRequests = shouldFetchTotals
+          ? ([
+              nextType === SEARCH_TYPES.USERS
+                ? Promise.resolve(null)
+                : appClient.get<ApiResponse<UserCardData>>("/api/search", {
+                    params: { q: trimmed, type: SEARCH_TYPES.USERS, page: 1, per_page: 1 },
+                  }),
+              nextType === SEARCH_TYPES.ORGANIZATIONS
+                ? Promise.resolve(null)
+                : appClient.get<ApiResponse<UserCardData>>("/api/search", {
+                    params: { q: trimmed, type: SEARCH_TYPES.ORGANIZATIONS, page: 1, per_page: 1 },
+                  }),
+              nextType === SEARCH_TYPES.REPOSITORIES
+                ? Promise.resolve(null)
+                : appClient.get<ApiResponse<RepoCardData>>("/api/search", {
+                    params: { q: trimmed, type: SEARCH_TYPES.REPOSITORIES, page: 1, per_page: 1 },
+                  }),
+            ] as const)
+          : null;
+
+        const [activeResponse, totalsSettled] = await Promise.all([
+          activeRequest,
+          shouldFetchTotals && totalsRequests
+            ? Promise.allSettled(totalsRequests)
+            : Promise.resolve([null, null, null]),
+        ]);
+        const [usersTotalResult, orgsTotalResult, reposTotalResult] = totalsSettled;
+        const results = activeResponse.data;
+
         if (results.error) {
           throw new Error(results.error ?? "Failed to load results.");
         }
 
         const nextTotal = results.total_count ?? 0;
-        if (nextType === SEARCH_TYPES.REPOSITORIES) {
-          setRepositoriesTotal(nextTotal);
-        } else if (nextType === SEARCH_TYPES.ORGANIZATIONS) {
-          setOrganizationsTotal(nextTotal);
-        } else {
-          setUsersTotal(nextTotal);
-        }
+        const safeTotal = <T,>(
+          result: PromiseSettledResult<Awaited<
+            ReturnType<typeof appClient.get<ApiResponse<T>>>
+          > | null> | null,
+        ) => {
+          if (!result || result.status !== "fulfilled") return 0;
+          if (result.value === null) return 0;
+          const data = result.value.data;
+          if (data.error) return 0;
+          return data.total_count ?? 0;
+        };
+        const totals = shouldFetchTotals
+          ? {
+              users:
+                nextType === SEARCH_TYPES.USERS
+                  ? nextTotal
+                  : safeTotal<UserCardData>(usersTotalResult),
+              organizations:
+                nextType === SEARCH_TYPES.ORGANIZATIONS
+                  ? nextTotal
+                  : safeTotal<UserCardData>(orgsTotalResult),
+              repositories:
+                nextType === SEARCH_TYPES.REPOSITORIES
+                  ? nextTotal
+                  : safeTotal<RepoCardData>(reposTotalResult),
+            }
+          : {
+              users: activeCache.totals.users,
+              organizations: activeCache.totals.organizations,
+              repositories: activeCache.totals.repositories,
+            };
+
+        setUsersTotal(totals.users);
+        setOrganizationsTotal(totals.organizations);
+        setRepositoriesTotal(totals.repositories);
 
         if (nextType === SEARCH_TYPES.REPOSITORIES) {
           const repoItems = results.items as RepoCardData[];
@@ -208,14 +267,12 @@ export default function SearchPageClient({ initialQuery, initialType }: SearchPa
             query: trimmed,
             updatedAt: now,
             totals: {
-              users: 0,
-              organizations: 0,
+              users: totals.users,
+              organizations: totals.organizations,
               repositories:
-                nextType === SEARCH_TYPES.REPOSITORIES
-                  ? repoItems.length > 0
-                    ? nextTotal
-                    : finalItems.length
-                  : 0,
+                repoItems.length > 0
+                  ? totals.repositories
+                  : Math.min(finalItems.length, totals.repositories),
             },
             hasTotals: true,
             results: {
@@ -250,16 +307,16 @@ export default function SearchPageClient({ initialQuery, initialType }: SearchPa
               users:
                 nextType === SEARCH_TYPES.USERS
                   ? userItems.length === 0
-                    ? finalItems.length
-                    : nextTotal
-                  : 0,
+                    ? Math.min(finalItems.length, totals.users)
+                    : totals.users
+                  : totals.users,
               organizations:
                 nextType === SEARCH_TYPES.ORGANIZATIONS
                   ? userItems.length === 0
-                    ? finalItems.length
-                    : nextTotal
-                  : 0,
-              repositories: 0,
+                    ? Math.min(finalItems.length, totals.organizations)
+                    : totals.organizations
+                  : totals.organizations,
+              repositories: totals.repositories,
             },
             hasTotals: true,
             results: {
@@ -351,7 +408,7 @@ export default function SearchPageClient({ initialQuery, initialType }: SearchPa
 
       {error ? (
         <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
-          {error}
+          {localizeRateLimitMessage(error)}
           {error.toLowerCase().includes("rate limit") ? (
             <p className="mt-2 text-sm text-destructive/90">
               Add a GitHub token in <code>.env.local</code>:
