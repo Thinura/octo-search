@@ -21,6 +21,18 @@ export const githubClient = axios.create({
   baseURL: "/api/github",
 });
 
+githubClient.interceptors.request.use((config) => {
+  config.headers = config.headers ?? {};
+  config.headers.Accept = "application/vnd.github+json";
+  config.headers["X-GitHub-Api-Version"] = "2022-11-28";
+  return config;
+});
+
+githubClient.interceptors.response.use(
+  (response) => response,
+  (error) => Promise.reject(error),
+);
+
 export const axiosBaseQuery =
   (): BaseQueryFn<AxiosBaseQueryArgs, unknown, AxiosBaseQueryError> =>
   async ({ url, method = "GET", data, params, headers }) => {

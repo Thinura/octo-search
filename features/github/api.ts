@@ -6,7 +6,7 @@ export const githubApi = createApi({
   baseQuery: axiosBaseQuery(),
   endpoints: (builder) => ({
     searchUsers: builder.query<
-      { items: Array<{ id: number; login: string; avatar_url: string }> },
+      { items: Array<{ id: number; username: string; avatar_url: string }> },
       { q: string; page?: number; perPage?: number }
     >({
       query: ({ q, page = 1, perPage = 30 }) => ({

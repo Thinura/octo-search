@@ -66,8 +66,17 @@ app/
     page.tsx
 
   users/
-    [login]/
+    [username]/
       page.tsx
+
+  organizations/
+    [username]/
+      page.tsx
+
+  repositories/
+    [owner]/
+      [repo]/
+        page.tsx
 
   repos/
     [owner]/
