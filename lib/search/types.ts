@@ -1,13 +1,13 @@
-export const SEARCH_TYPES = ["users", "organizations", "repositories"] as const;
+import { SEARCH_TYPES, SEARCH_TYPE_VALUES } from "@/lib/constants/search";
 
-export type SearchType = (typeof SEARCH_TYPES)[number];
+export type SearchType = (typeof SEARCH_TYPE_VALUES)[number];
 
 export function normalizeSearchType(value?: string | null): SearchType {
-  if (!value) return "users";
-  if (value === "orgs") return "organizations";
-  if (value === "repos") return "repositories";
-  if (SEARCH_TYPES.includes(value as SearchType)) {
+  if (!value) return SEARCH_TYPES.USERS;
+  if (value === "orgs") return SEARCH_TYPES.ORGANIZATIONS;
+  if (value === "repos") return SEARCH_TYPES.REPOSITORIES;
+  if (SEARCH_TYPE_VALUES.includes(value as SearchType)) {
     return value as SearchType;
   }
-  return "users";
+  return SEARCH_TYPES.USERS;
 }

@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { vi } from "vitest";
 import FavoritesList from "@/components/favorites/favorites-list";
 import type { FavoriteItem } from "@/features/favorites/slice";
+import { SEARCH_TYPES } from "@/lib/constants/search";
 
 type MockUserCardProps = {
   user: { id: number; username: string };
@@ -82,14 +83,16 @@ describe("FavoritesList", () => {
   });
 
   it("shows the global empty state when all lists are empty", () => {
-    render(<FavoritesList activeType="users" users={[]} orgs={[]} repos={[]} />);
+    render(<FavoritesList activeType={SEARCH_TYPES.USERS} users={[]} orgs={[]} repos={[]} />);
 
     expect(screen.getByText("No favorites yet.")).toBeInTheDocument();
     expect(screen.queryByText("Users")).not.toBeInTheDocument();
   });
 
   it("shows section-specific empty states when some lists have data", () => {
-    render(<FavoritesList activeType="users" users={[]} orgs={[orgItem]} repos={[]} />);
+    render(
+      <FavoritesList activeType={SEARCH_TYPES.USERS} users={[]} orgs={[orgItem]} repos={[]} />,
+    );
 
     expect(screen.getByText("Users")).toBeInTheDocument();
     expect(screen.getByText("No user favorites.")).toBeInTheDocument();
@@ -99,7 +102,7 @@ describe("FavoritesList", () => {
   it("renders only the organizations section when activeType is organizations", () => {
     render(
       <FavoritesList
-        activeType="organizations"
+        activeType={SEARCH_TYPES.ORGANIZATIONS}
         users={[userItem]}
         orgs={[orgItem]}
         repos={[repoItem]}
@@ -114,7 +117,7 @@ describe("FavoritesList", () => {
   it("renders only the repositories section when activeType is repositories", () => {
     render(
       <FavoritesList
-        activeType="repositories"
+        activeType={SEARCH_TYPES.REPOSITORIES}
         users={[userItem]}
         orgs={[orgItem]}
         repos={[repoItem]}
@@ -167,7 +170,7 @@ describe("FavoritesList", () => {
   });
 
   it("renders loading skeletons and hides empty state", () => {
-    const { container } = render(<FavoritesList isLoading activeType="users" />);
+    const { container } = render(<FavoritesList isLoading activeType={SEARCH_TYPES.USERS} />);
 
     expect(container.querySelectorAll(".MuiSkeleton-root").length).toBeGreaterThan(0);
     expect(screen.queryByText("No favorites yet.")).not.toBeInTheDocument();
@@ -186,7 +189,7 @@ describe("FavoritesList", () => {
         orgs={[orgItem]}
         repos={[]}
         selectionEnabled
-        activeType="organizations"
+        activeType={SEARCH_TYPES.ORGANIZATIONS}
       />,
     );
 
@@ -200,7 +203,7 @@ describe("FavoritesList", () => {
         orgs={[]}
         repos={[repoItem]}
         selectionEnabled
-        activeType="repositories"
+        activeType={SEARCH_TYPES.REPOSITORIES}
       />,
     );
 

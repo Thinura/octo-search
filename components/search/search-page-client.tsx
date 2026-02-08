@@ -7,6 +7,8 @@ import SearchResults from "@/components/search/search-results";
 import Skeleton from "@mui/material/Skeleton";
 import type { RepoCardData } from "@/components/search/repo-card";
 import type { UserCardData } from "@/components/search/user-card";
+import { CACHE_TTL_MS } from "@/lib/constants/cache";
+import { SEARCH_TYPES } from "@/lib/constants/search";
 import { normalizeSearchType, type SearchType } from "@/lib/search/types";
 
 type SearchPageClientProps = {
@@ -20,8 +22,6 @@ type ApiResponse<T> = {
   page: number;
   error?: string;
 };
-
-const CACHE_TTL_MS = 3 * 60 * 1000;
 
 type CachedResult = {
   items: UserCardData[] | RepoCardData[];
@@ -128,9 +128,9 @@ export default function SearchPageClient({ initialQuery, initialType }: SearchPa
       const cached = cacheValid ? activeCache.results[nextType] : undefined;
       if (cacheValid && cached) {
         const totalForType =
-          nextType === "repositories"
+          nextType === SEARCH_TYPES.REPOSITORIES
             ? activeCache.totals.repositories
-            : nextType === "organizations"
+            : nextType === SEARCH_TYPES.ORGANIZATIONS
               ? activeCache.totals.organizations
               : activeCache.totals.users;
         const cacheHasMeaningfulData =
@@ -141,7 +141,7 @@ export default function SearchPageClient({ initialQuery, initialType }: SearchPa
             setOrganizationsTotal(activeCache.totals.organizations);
             setRepositoriesTotal(activeCache.totals.repositories);
           }
-          if (nextType === "repositories") {
+          if (nextType === SEARCH_TYPES.REPOSITORIES) {
             setRepos(cached.items as RepoCardData[]);
             setUsers([]);
           } else {
@@ -175,15 +175,15 @@ export default function SearchPageClient({ initialQuery, initialType }: SearchPa
         }
 
         const nextTotal = results.total_count ?? 0;
-        if (nextType === "repositories") {
+        if (nextType === SEARCH_TYPES.REPOSITORIES) {
           setRepositoriesTotal(nextTotal);
-        } else if (nextType === "organizations") {
+        } else if (nextType === SEARCH_TYPES.ORGANIZATIONS) {
           setOrganizationsTotal(nextTotal);
         } else {
           setUsersTotal(nextTotal);
         }
 
-        if (nextType === "repositories") {
+        if (nextType === SEARCH_TYPES.REPOSITORIES) {
           const repoItems = results.items as RepoCardData[];
           const fallback =
             repoItems.length === 0
@@ -212,7 +212,7 @@ export default function SearchPageClient({ initialQuery, initialType }: SearchPa
               users: 0,
               organizations: 0,
               repositories:
-                nextType === "repositories"
+                nextType === SEARCH_TYPES.REPOSITORIES
                   ? repoItems.length > 0
                     ? nextTotal
                     : finalItems.length
@@ -249,9 +249,13 @@ export default function SearchPageClient({ initialQuery, initialType }: SearchPa
             updatedAt: now,
             totals: {
               users:
-                nextType === "users" ? (userItems.length === 0 ? finalItems.length : nextTotal) : 0,
+                nextType === SEARCH_TYPES.USERS
+                  ? userItems.length === 0
+                    ? finalItems.length
+                    : nextTotal
+                  : 0,
               organizations:
-                nextType === "organizations"
+                nextType === SEARCH_TYPES.ORGANIZATIONS
                   ? userItems.length === 0
                     ? finalItems.length
                     : nextTotal
@@ -301,7 +305,7 @@ export default function SearchPageClient({ initialQuery, initialType }: SearchPa
       const cache = cacheRef.current;
       if (cache.query !== trimmed) return;
       cache.results[type] = {
-        items: type === "repositories" ? state.repos : state.users,
+        items: type === SEARCH_TYPES.REPOSITORIES ? state.repos : state.users,
         page: state.page,
       };
       cache.updatedAt = Date.now();
@@ -310,9 +314,9 @@ export default function SearchPageClient({ initialQuery, initialType }: SearchPa
   );
 
   const totalCount =
-    type === "repositories"
+    type === SEARCH_TYPES.REPOSITORIES
       ? repositoriesTotal
-      : type === "organizations"
+      : type === SEARCH_TYPES.ORGANIZATIONS
         ? organizationsTotal
         : usersTotal;
 

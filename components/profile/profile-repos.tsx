@@ -5,6 +5,8 @@ import RepoCard, { RepoCardData } from "@/components/search/repo-card";
 import { Button } from "@/components/ui/button";
 import SearchShell from "@/components/search/search-shell";
 import Skeleton from "@mui/material/Skeleton";
+import { CACHE_TTL_MS } from "@/lib/constants/cache";
+import { SEARCH_TYPES } from "@/lib/constants/search";
 
 type ProfileReposProps = {
   owner: string;
@@ -15,8 +17,6 @@ type ProfileReposProps = {
 };
 
 type ApiRepo = RepoCardData;
-
-const CACHE_TTL_MS = 3 * 60 * 1000;
 
 type CachedList = {
   items: ApiRepo[];
@@ -77,7 +77,7 @@ export default function ProfileRepos({
         mode === "search"
           ? `/api/search?q=${encodeURIComponent(
               `${query} ${kind === "org" ? "org" : "user"}:${owner}`,
-            )}&type=repositories&page=${nextPage}&per_page=${perPage}`
+            )}&type=${SEARCH_TYPES.REPOSITORIES}&page=${nextPage}&per_page=${perPage}`
           : `/api/profile-repos?kind=${kind}&name=${encodeURIComponent(
               owner,
             )}&page=${nextPage}&per_page=${perPage}`;
@@ -164,7 +164,7 @@ export default function ProfileRepos({
         const response = await fetch(
           `/api/search?q=${encodeURIComponent(
             `${trimmed} ${kind === "org" ? "org" : "user"}:${owner}`,
-          )}&type=repositories&page=1&per_page=${perPage}`,
+          )}&type=${SEARCH_TYPES.REPOSITORIES}&page=1&per_page=${perPage}`,
           { signal: controller.signal },
         );
         const data = (await response.json()) as {
@@ -257,10 +257,10 @@ export default function ProfileRepos({
         inputPlaceholder="Search repositories..."
         showSearchButton={false}
         liveSearch={false}
-        tabs={["users", "repositories"]}
+        tabs={[SEARCH_TYPES.USERS, SEARCH_TYPES.REPOSITORIES]}
         tabLabels={{
-          users: "Public",
-          repositories: "Private",
+          [SEARCH_TYPES.USERS]: "Public",
+          [SEARCH_TYPES.REPOSITORIES]: "Private",
         }}
         counts={{
           users: mode === "search" && searchTotal !== null && !isTyping ? searchTotal : publicCount,
@@ -268,7 +268,7 @@ export default function ProfileRepos({
           repos: 0,
         }}
         initialQuery={draftQuery}
-        initialType={visibility === "public" ? "users" : "repositories"}
+        initialType={visibility === "public" ? SEARCH_TYPES.USERS : SEARCH_TYPES.REPOSITORIES}
         onQueryChange={(value) => {
           setDraftQuery(value);
           if (value.trim()) {
@@ -281,10 +281,10 @@ export default function ProfileRepos({
         }}
         onSearchSubmit={() => {}}
         onTabSelect={(tab) => {
-          if (tab === "users") {
+          if (tab === SEARCH_TYPES.USERS) {
             setVisibility("public");
           }
-          if (tab === "repositories") {
+          if (tab === SEARCH_TYPES.REPOSITORIES) {
             setVisibility("private");
           }
         }}

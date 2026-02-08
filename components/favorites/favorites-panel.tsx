@@ -8,10 +8,12 @@ import { removeFavorite, type FavoriteItem } from "@/features/favorites/slice";
 import FavoritesList from "@/components/favorites/favorites-list";
 import SearchShell from "@/components/search/search-shell";
 import { Button } from "@/components/ui/button";
-import { normalizeSearchType } from "@/lib/search/types";
+import { SEARCH_TYPES } from "@/lib/constants/search";
+import { normalizeSearchType, type SearchType } from "@/lib/search/types";
 import { useToast } from "@/components/ui/use-toast";
+import { CACHE_TTL_MS } from "@/lib/constants/cache";
 
-type TabType = "users" | "organizations" | "repositories";
+type TabType = SearchType;
 
 function matchesQuery(text: string, query: string) {
   return text.toLowerCase().includes(query.toLowerCase());
@@ -67,8 +69,6 @@ export default function FavoritesPanel() {
     const cacheKey = `${favoritesKey}:${trimmed}`;
     const now = Date.now();
     const cache = cacheRef.current;
-    const CACHE_TTL_MS = 3 * 60 * 1000;
-
     setIsFiltering(true);
     if (filterTimerRef.current) {
       window.clearTimeout(filterTimerRef.current);
@@ -118,7 +118,11 @@ export default function FavoritesPanel() {
   }, [favorites, favoritesKey, query]);
 
   const visibleItems =
-    type === "users" ? filteredUsers : type === "organizations" ? filteredOrgs : filteredRepos;
+    type === SEARCH_TYPES.USERS
+      ? filteredUsers
+      : type === SEARCH_TYPES.ORGANIZATIONS
+        ? filteredOrgs
+        : filteredRepos;
   const visibleIds = visibleItems.map((item) => item.id);
   const allVisibleSelected =
     visibleIds.length > 0 && visibleIds.every((id) => selectedIds.includes(id));
@@ -126,7 +130,7 @@ export default function FavoritesPanel() {
   const updateUrl = React.useCallback(
     (nextType: TabType) => {
       const params = new URLSearchParams();
-      if (nextType !== "users") {
+      if (nextType !== SEARCH_TYPES.USERS) {
         params.set("type", nextType);
       }
       const next = params.toString();

@@ -9,6 +9,7 @@ import AppHeader from "@/components/layout/app-header";
 import { cn } from "@/lib/utils/cn";
 import { useToast } from "@/components/ui/use-toast";
 import { TOAST_DESCRIPTIONS, TOAST_TITLES } from "@/lib/constants/messages";
+import { SEARCH_TYPES } from "@/lib/constants/search";
 import type { SearchType } from "@/lib/search/types";
 
 type SearchShellProps = {
@@ -23,14 +24,14 @@ type SearchShellProps = {
 
 export default function SearchShell({
   initialQuery = "",
-  initialType = "users",
+  initialType = SEARCH_TYPES.USERS,
   counts,
   title = "Find GitHub users, organizations, and repositories fast",
   description = "Search users, organizations, and repositories from one simple query.",
   showSearch = true,
   showTabs = true,
   showHeader = true,
-  tabs = ["users", "organizations", "repositories"],
+  tabs = [SEARCH_TYPES.USERS, SEARCH_TYPES.ORGANIZATIONS, SEARCH_TYPES.REPOSITORIES],
   tabLabels,
   inputPlaceholder = "Search...",
   showSearchButton = true,
@@ -250,16 +251,16 @@ export default function SearchShell({
                       : `/?type=${tab}`;
                     const href = base;
                     const count =
-                      tab === "users"
+                      tab === SEARCH_TYPES.USERS
                         ? counts?.users
-                        : tab === "organizations"
+                        : tab === SEARCH_TYPES.ORGANIZATIONS
                           ? counts?.orgs
                           : counts?.repos;
                     const tabLabel =
                       tabLabels?.[tab] ??
-                      (tab === "users"
+                      (tab === SEARCH_TYPES.USERS
                         ? "Users"
-                        : tab === "organizations"
+                        : tab === SEARCH_TYPES.ORGANIZATIONS
                           ? "Organizations"
                           : "Repositories");
                     const label =
