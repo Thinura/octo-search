@@ -6,7 +6,10 @@ import { TOAST_DESCRIPTIONS, TOAST_TITLES } from "@/lib/constants/messages";
 
 type ErrorLike = { status?: number; data?: unknown; message?: string } | Error | null | undefined;
 
-export function useErrorToast(error: ErrorLike, fallback = TOAST_DESCRIPTIONS.genericError) {
+export function useErrorToast(
+  error: ErrorLike,
+  fallback: string = TOAST_DESCRIPTIONS.genericError,
+) {
   const { toast } = useToast();
 
   React.useEffect(() => {

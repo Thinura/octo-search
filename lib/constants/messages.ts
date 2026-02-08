@@ -6,7 +6,7 @@ export const TOAST_TITLES = {
 
 export const TOAST_DESCRIPTIONS = {
   genericError: "Something went wrong",
-  searchNotWired: "Connect the API to display results.",
+  emptySearch: "Enter a search term to continue.",
   rateLimited: "Rate limit hit. Add a GitHub token or try again later.",
   unauthorized: "Unauthorized. Check your GitHub token permissions.",
   notFound: "Resource not found.",
