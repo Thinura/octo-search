@@ -8,6 +8,7 @@ import Skeleton from "@mui/material/Skeleton";
 import { CACHE_TTL_MS } from "@/lib/constants/cache";
 import { SEARCH_TYPES } from "@/lib/constants/search";
 import { appClient, getApiErrorMessage } from "@/lib/api/client";
+import { localizeRateLimitMessage } from "@/lib/utils/rate-limit";
 
 type ProfileReposProps = {
   owner: string;
@@ -304,7 +305,7 @@ export default function ProfileRepos({
       </div>
       {error ? (
         <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
-          {error}
+          {localizeRateLimitMessage(error)}
           {error.toLowerCase().includes("rate limit") ? (
             <p className="mt-2 text-sm text-destructive/90">
               Add a GitHub token in <code>.env.local</code>:

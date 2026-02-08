@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import FavoriteButton from "@/components/favorites/favorite-button";
 import { fetchGitHub } from "@/lib/github/server";
 import DetailShell from "@/components/layout/detail-shell";
+import RepoIssues from "@/components/repositories/repo-issues";
 
 const formatDate = (value?: string | null) =>
   value
@@ -69,11 +70,21 @@ export async function generateMetadata({ params }: RepoPageProps): Promise<Metad
 
 export default async function RepositoryPage({ params }: RepoPageProps) {
   let repo: GitHubRepo;
-  let issues: Array<{ id: number; title: string; html_url: string; pull_request?: unknown }> = [];
+  let ownerValue = "";
+  let repoValue = "";
+  let issues: Array<{
+    id: number;
+    number: number;
+    title: string;
+    html_url: string;
+    pull_request?: unknown;
+  }> = [];
   let languages: Array<{ name: string; percentage: number }> = [];
   let latestRelease: { name: string | null; tag_name: string; html_url: string } | null = null;
   try {
     const { owner, repo: repoName } = await params;
+    ownerValue = owner;
+    repoValue = repoName;
     repo = await fetchGitHub<GitHubRepo>(`/repos/${owner}/${repoName}`, {
       revalidate: 300,
     });
@@ -87,9 +98,15 @@ export default async function RepositoryPage({ params }: RepoPageProps) {
       ).catch(() => null),
     ]);
     const issuesRaw = await fetchGitHub<
-      Array<{ id: number; title: string; html_url: string; pull_request?: unknown }>
+      Array<{
+        id: number;
+        number: number;
+        title: string;
+        html_url: string;
+        pull_request?: unknown;
+      }>
     >(`/repos/${owner}/${repoName}/issues`, {
-      params: { state: "open", per_page: "5" },
+      params: { state: "open", per_page: "12" },
       revalidate: 60,
     });
     issues = issuesRaw.filter((issue) => !issue.pull_request);
@@ -113,16 +130,30 @@ export default async function RepositoryPage({ params }: RepoPageProps) {
             <p className="mt-2 text-sm text-muted-foreground">{repo.description}</p>
           ) : null}
         </div>
-        <FavoriteButton
-          item={{
-            kind: "repo",
-            id: `repo:${repo.id}`,
-            fullName: repo.full_name,
-            description: repo.description,
-            htmlUrl: repo.html_url,
-            stars: repo.stargazers_count,
-          }}
-        />
+        <div className="flex items-center gap-2">
+          <a
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition hover:bg-accent/40 hover:text-foreground"
+            href={repo.html_url}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="View on GitHub"
+            title="View on GitHub"
+          >
+            <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 .5a12 12 0 00-3.79 23.4c.6.1.82-.26.82-.58v-2.17c-3.34.73-4.04-1.6-4.04-1.6-.55-1.4-1.34-1.77-1.34-1.77-1.1-.75.08-.73.08-.73 1.2.09 1.83 1.24 1.83 1.24 1.08 1.85 2.82 1.32 3.5 1.01.1-.78.42-1.32.77-1.63-2.66-.3-5.46-1.33-5.46-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 016 0c2.28-1.55 3.3-1.23 3.3-1.23.66 1.66.24 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.8 5.62-5.47 5.92.43.37.82 1.1.82 2.22v3.28c0 .32.22.69.83.57A12 12 0 0012 .5z" />
+            </svg>
+          </a>
+          <FavoriteButton
+            item={{
+              kind: "repo",
+              id: `repo:${repo.id}`,
+              fullName: repo.full_name,
+              description: repo.description,
+              htmlUrl: repo.html_url,
+              stars: repo.stargazers_count,
+            }}
+          />
+        </div>
       </div>
 
       <Card>
@@ -176,26 +207,19 @@ export default async function RepositoryPage({ params }: RepoPageProps) {
             </div>
           ) : null}
 
-          <div className="flex flex-wrap gap-4">
-            <a
-              className="text-sm text-primary hover:underline"
-              href={repo.html_url}
-              target="_blank"
-              rel="noreferrer"
-            >
-              View on GitHub
-            </a>
-            {repo.homepage ? (
+          {repo.homepage ? (
+            <div className="text-sm">
+              <span className="text-muted-foreground">Website:</span>{" "}
               <a
-                className="text-sm text-primary hover:underline"
+                className="text-primary hover:underline"
                 href={repo.homepage}
                 target="_blank"
                 rel="noreferrer"
               >
-                Homepage
+                {repo.homepage}
               </a>
-            ) : null}
-          </div>
+            </div>
+          ) : null}
 
           {latestRelease ? (
             <div className="text-sm">
@@ -226,28 +250,15 @@ export default async function RepositoryPage({ params }: RepoPageProps) {
               </div>
             </div>
           ) : null}
-
-          {issues.length ? (
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Open issues (latest)</p>
-              <ul className="space-y-1 text-sm">
-                {issues.map((issue) => (
-                  <li key={issue.id}>
-                    <a
-                      className="text-primary hover:underline"
-                      href={issue.html_url}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      {issue.title}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
         </CardContent>
       </Card>
+
+      <RepoIssues
+        issues={issues}
+        totalCount={repo.open_issues_count}
+        owner={ownerValue}
+        repo={repoValue}
+      />
     </DetailShell>
   );
 }
