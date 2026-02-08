@@ -17,7 +17,7 @@ type ToasterProps = {
 
 export function Toaster({ toasts, onDismiss }: ToasterProps) {
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex w-full max-w-sm flex-col gap-3">
+    <div className="fixed top-6 right-6 z-50 flex w-full max-w-sm flex-col gap-3">
       {toasts.map((toast) => (
         <div
           key={toast.id}

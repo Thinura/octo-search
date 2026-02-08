@@ -1,0 +1,203 @@
+"use client";
+
+import RepoCard, { RepoCardData } from "@/components/search/repo-card";
+import UserCard, { UserCardData } from "@/components/search/user-card";
+import type { FavoriteItem } from "@/features/favorites/slice";
+import Skeleton from "@mui/material/Skeleton";
+
+type FavoritesListProps = {
+  users?: Extract<FavoriteItem, { kind: "user" }>[];
+  orgs?: Extract<FavoriteItem, { kind: "org" }>[];
+  repos?: Extract<FavoriteItem, { kind: "repo" }>[];
+  activeType?: "users" | "organizations" | "repositories" | "all";
+  isLoading?: boolean;
+  selectionEnabled?: boolean;
+  selectedIds?: string[];
+  onToggleSelect?: (id: string) => void;
+};
+
+export default function FavoritesList({
+  users = [],
+  orgs = [],
+  repos = [],
+  activeType = "all",
+  isLoading = false,
+  selectionEnabled = false,
+  selectedIds = [],
+  onToggleSelect,
+}: FavoritesListProps) {
+  if (isLoading) {
+    const sections =
+      activeType === "all"
+        ? ["Users", "Organizations", "Repositories"]
+        : [
+            activeType === "users"
+              ? "Users"
+              : activeType === "organizations"
+                ? "Organizations"
+                : "Repositories",
+          ];
+    return (
+      <div className="space-y-8">
+        {sections.map((title) => (
+          <section key={title} className="space-y-3">
+            <Skeleton variant="text" width={140} height={24} />
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <Skeleton key={index} variant="rounded" height={112} />
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+    );
+  }
+
+  if (!users.length && !orgs.length && !repos.length) {
+    return <p className="text-sm text-muted-foreground">No favorites yet.</p>;
+  }
+
+  return (
+    <div className="space-y-8">
+      {activeType === "users" || activeType === "all" ? (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">Users</h2>
+          {users.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No user favorites.</p>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {users.map((item) => {
+                const numericId = Number(item.id.split(":")[1] ?? item.id);
+                const user: UserCardData = {
+                  id: Number.isNaN(numericId) ? 0 : numericId,
+                  username: item.username,
+                  avatar_url: item.avatarUrl,
+                  html_url: item.htmlUrl,
+                };
+
+                const isSelected = selectedIds.includes(item.id);
+                return (
+                  <div
+                    key={item.id}
+                    className={`relative ${
+                      isSelected ? "rounded-xl ring-2 ring-destructive/60" : ""
+                    }`}
+                  >
+                    <UserCard
+                      user={user}
+                      selectionControl={
+                        selectionEnabled ? (
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 accent-foreground"
+                            checked={selectedIds.includes(item.id)}
+                            onChange={() => onToggleSelect?.(item.id)}
+                            aria-label={`Select ${item.username}`}
+                          />
+                        ) : null
+                      }
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      ) : null}
+
+      {activeType === "organizations" || activeType === "all" ? (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">Organizations</h2>
+          {orgs.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No organization favorites.</p>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {orgs.map((item) => {
+                const numericId = Number(item.id.split(":")[1] ?? item.id);
+                const user: UserCardData = {
+                  id: Number.isNaN(numericId) ? 0 : numericId,
+                  username: item.username,
+                  avatar_url: item.avatarUrl,
+                  html_url: item.htmlUrl,
+                };
+
+                const isSelected = selectedIds.includes(item.id);
+                return (
+                  <div
+                    key={item.id}
+                    className={`relative ${
+                      isSelected ? "rounded-xl ring-2 ring-destructive/60" : ""
+                    }`}
+                  >
+                    <UserCard
+                      user={user}
+                      entityType="org"
+                      selectionControl={
+                        selectionEnabled ? (
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 accent-foreground"
+                            checked={selectedIds.includes(item.id)}
+                            onChange={() => onToggleSelect?.(item.id)}
+                            aria-label={`Select ${item.username}`}
+                          />
+                        ) : null
+                      }
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      ) : null}
+
+      {activeType === "repositories" || activeType === "all" ? (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">Repositories</h2>
+          {repos.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No repository favorites.</p>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {repos.map((item) => {
+                const numericId = Number(item.id.split(":")[1] ?? item.id);
+                const repo: RepoCardData = {
+                  id: Number.isNaN(numericId) ? 0 : numericId,
+                  full_name: item.fullName,
+                  description: item.description,
+                  html_url: item.htmlUrl,
+                  stargazers_count: item.stars,
+                };
+
+                const isSelected = selectedIds.includes(item.id);
+                return (
+                  <div
+                    key={item.id}
+                    className={`relative ${
+                      isSelected ? "rounded-xl ring-2 ring-destructive/60" : ""
+                    }`}
+                  >
+                    <RepoCard
+                      repo={repo}
+                      selectionControl={
+                        selectionEnabled ? (
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 accent-foreground"
+                            checked={selectedIds.includes(item.id)}
+                            onChange={() => onToggleSelect?.(item.id)}
+                            aria-label={`Select ${item.fullName}`}
+                          />
+                        ) : null
+                      }
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      ) : null}
+    </div>
+  );
+}
