@@ -10,7 +10,11 @@ export default function OrganizationNotFound() {
       <p className="text-sm text-muted-foreground">
         If you are seeing rate limit errors, add a GitHub token in <code>.env.local</code>:
         <br />
-        <code>GITHUB_TOKEN=your_token_here</code>
+        <code>GH_API_TOKEN=your_token_here</code>
+        <br />
+        <span className="text-xs text-muted-foreground">
+          GitHub Actions secrets cannot start with <code>GITHUB_</code>.
+        </span>
       </p>
       <button
         type="button"

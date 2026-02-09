@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const baseUrl = process.env.GITHUB_API_BASE ?? "https://api.github.com";
-const token = process.env.GITHUB_TOKEN;
+const token = process.env.GH_API_TOKEN ?? process.env.GITHUB_TOKEN;
 
 function buildTargetUrl(request: NextRequest, path: string[]) {
   const url = new URL(baseUrl.replace(/\/$/, "") + "/" + path.join("/"));

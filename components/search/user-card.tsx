@@ -21,7 +21,6 @@ export default function UserCard({
 }) {
   const profileHref =
     entityType === "org" ? `/organizations/${user.username}` : `/users/${user.username}`;
-
   return (
     <Card className="relative transition hover:border-foreground/20 h-full min-h-[96px] flex flex-col">
       <Link
@@ -29,8 +28,8 @@ export default function UserCard({
         aria-label={`View ${entityType === "org" ? "organization" : "user"} ${user.username}`}
         className="absolute inset-0 rounded-xl z-10"
       />
-      <CardContent className="relative z-20 flex h-full items-start justify-between gap-3 px-3 py-3 pointer-events-none">
-        <div className="flex items-start gap-3 min-w-0">
+      <CardContent className="relative z-20 flex h-full items-center justify-between gap-3 px-3 py-3 pointer-events-none">
+        <div className="flex items-center gap-3 min-w-0">
           {selectionControl ? (
             <div className="pointer-events-auto flex items-center self-start mt-0.5">
               {selectionControl}
