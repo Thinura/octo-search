@@ -389,6 +389,8 @@ export default function SearchPageClient({ initialQuery, initialType }: SearchPa
         initialType={type}
         showSearchButton={false}
         liveSearch
+        debounceMs={600}
+        minSearchLength={3}
         tabMode="button"
         counts={{
           users: usersTotal,
@@ -413,7 +415,11 @@ export default function SearchPageClient({ initialQuery, initialType }: SearchPa
             <p className="mt-2 text-sm text-destructive/90">
               Add a GitHub token in <code>.env.local</code>:
               <br />
-              <code>GITHUB_TOKEN=your_token_here</code>
+              <code>GH_API_TOKEN=your_token_here</code>
+              <br />
+              <span className="text-xs text-destructive/80">
+                GitHub Actions secrets cannot start with <code>GITHUB_</code>.
+              </span>
             </p>
           ) : null}
         </div>

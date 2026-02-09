@@ -1,5 +1,5 @@
 const baseUrl = process.env.GITHUB_API_BASE ?? "https://api.github.com";
-const token = process.env.GITHUB_TOKEN;
+const token = process.env.GH_API_TOKEN ?? process.env.GITHUB_TOKEN;
 
 type FetchGitHubOptions = {
   params?: Record<string, string>;
@@ -35,14 +35,14 @@ export async function fetchGitHub<T>(path: string, options: FetchGitHubOptions =
     }
 
     if (response.status === 401) {
-      message = "GitHub API unauthorized. Check your GITHUB_TOKEN.";
+      message = "GitHub API unauthorized. Check your GH_API_TOKEN.";
     }
 
     if (response.status === 403 && remaining === "0") {
       const resetTime = reset ? new Date(Number(reset) * 1000).toUTCString() : null;
       message = resetTime
-        ? `GitHub rate limit exceeded. Try again after ${resetTime} or add a GITHUB_TOKEN.`
-        : "GitHub rate limit exceeded. Add a GITHUB_TOKEN or try again later.";
+        ? `GitHub rate limit exceeded. Try again after ${resetTime} or add a GH_API_TOKEN.`
+        : "GitHub rate limit exceeded. Add a GH_API_TOKEN or try again later.";
     }
 
     throw new Error(message);

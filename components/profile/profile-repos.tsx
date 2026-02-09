@@ -215,10 +215,17 @@ export default function ProfileRepos({
   );
 
   React.useEffect(() => {
-    if (!draftQuery.trim()) return;
     const timer = window.setTimeout(() => {
-      runSearch(draftQuery);
-    }, 400);
+      const trimmed = draftQuery.trim();
+      if (!trimmed) {
+        runSearch("");
+        return;
+      }
+      if (trimmed.length < 3) {
+        return;
+      }
+      runSearch(trimmed);
+    }, 600);
     return () => window.clearTimeout(timer);
   }, [draftQuery, runSearch]);
 
@@ -240,7 +247,7 @@ export default function ProfileRepos({
     return () => observer.disconnect();
   }, [hasMore, isLoading, loadMore]);
 
-  // Search is handled by SearchShell liveSearch debounce.
+  // Search is handled by local debounce with a minimum length.
 
   const isTyping = draftQuery.trim() !== "" && draftQuery.trim() !== query;
   const showSkeleton = isLoading || isTyping;
@@ -266,6 +273,8 @@ export default function ProfileRepos({
         inputPlaceholder="Search repositories..."
         showSearchButton={false}
         liveSearch={false}
+        debounceMs={600}
+        minSearchLength={3}
         tabs={[SEARCH_TYPES.USERS, SEARCH_TYPES.REPOSITORIES]}
         tabLabels={{
           [SEARCH_TYPES.USERS]: "Public",
@@ -310,7 +319,11 @@ export default function ProfileRepos({
             <p className="mt-2 text-sm text-destructive/90">
               Add a GitHub token in <code>.env.local</code>:
               <br />
-              <code>GITHUB_TOKEN=your_token_here</code>
+              <code>GH_API_TOKEN=your_token_here</code>
+              <br />
+              <span className="text-xs text-destructive/80">
+                GitHub Actions secrets cannot start with <code>GITHUB_</code>.
+              </span>
             </p>
           ) : null}
         </div>

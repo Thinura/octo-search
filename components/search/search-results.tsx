@@ -44,6 +44,20 @@ export default function SearchResults({
   const [error, setError] = React.useState<string | null>(null);
   const sentinelRef = React.useRef<HTMLDivElement | null>(null);
 
+  const mergeUsers = React.useCallback((prev: UserCardData[], next: UserCardData[]) => {
+    if (!next.length) return prev;
+    const merged = [...prev];
+    const seen = new Set(prev.map((user) => `${user.id}:${user.username}`));
+    next.forEach((user) => {
+      const key = `${user.id}:${user.username}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        merged.push(user);
+      }
+    });
+    return merged;
+  }, []);
+
   const totalPages = Math.min(Math.ceil(totalCount / perPage), 10);
   const hasMore = page < totalPages;
 
@@ -67,7 +81,7 @@ export default function SearchResults({
       if (type === SEARCH_TYPES.REPOSITORIES) {
         setRepos((prev) => [...prev, ...(data.items as RepoCardData[])]);
       } else {
-        setUsers((prev) => [...prev, ...(data.items as UserCardData[])]);
+        setUsers((prev) => mergeUsers(prev, data.items as UserCardData[]));
       }
 
       setPage(nextPage);
@@ -126,7 +140,11 @@ export default function SearchResults({
             <p className="mt-2 text-sm text-destructive/90">
               Add a GitHub token in <code>.env.local</code>:
               <br />
-              <code>GITHUB_TOKEN=your_token_here</code>
+              <code>GH_API_TOKEN=your_token_here</code>
+              <br />
+              <span className="text-xs text-destructive/80">
+                GitHub Actions secrets cannot start with <code>GITHUB_</code>.
+              </span>
             </p>
           ) : null}
         </div>
@@ -150,7 +168,7 @@ export default function SearchResults({
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
           {users.map((user) => (
             <UserCard
-              key={user.username}
+              key={`${user.id}-${user.username}`}
               user={user}
               entityType={type === SEARCH_TYPES.ORGANIZATIONS ? "org" : "user"}
             />
