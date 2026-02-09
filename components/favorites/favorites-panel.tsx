@@ -152,6 +152,8 @@ export default function FavoritesPanel() {
         tabMode="button"
         showSearchButton={false}
         liveSearch
+        debounceMs={600}
+        minSearchLength={3}
         tabsRightSlot={
           <div className="flex flex-wrap items-center gap-2">
             {!selectMode && visibleItems.length === 0 ? null : (

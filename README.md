@@ -2,6 +2,17 @@
 
 GitHub search application built with Next.js (App Router), Redux Toolkit, and Axios.
 
+## Tech Stack
+
+- Next.js (App Router)
+- React
+- Redux Toolkit + RTK Query
+- Axios
+- MUI (Material UI)
+- Tailwind CSS
+- Vitest + Testing Library
+- Bun
+
 ## Setup
 
 ### Requirements
@@ -21,8 +32,10 @@ cp .env.example .env.local
 Optional GitHub token for higher rate limits (server-side only):
 
 ```
-GITHUB_TOKEN=
+GH_API_TOKEN=
 ```
+
+Note: GitHub Actions secrets cannot start with `GITHUB_`, so use `GH_API_TOKEN` in repo settings.
 
 Optional API base override:
 
@@ -36,6 +49,8 @@ GITHUB_API_BASE=https://api.github.com
 nvm use
 bun install
 ```
+
+Note: `bun install` runs `prepare` to install Husky hooks.
 
 ### Run
 
@@ -51,6 +66,16 @@ bun run start
 bun run lint
 bun run format:check
 bun run format:write
+bun run test
+bun run test:watch
+bun run prepare
+```
+
+### Testing
+
+```bash
+bun run test
+bun run test:watch
 ```
 
 ## Key Features Added
@@ -61,6 +86,42 @@ bun run format:write
 - Dynamic detail pages for users, organizations, and repositories.
 - Server-side GitHub API proxy with token support to avoid rate limits.
 - Dark/light/system theme toggle.
+
+## Deployment
+
+Live site:
+
+- https://octo-search.vercel.app
+
+## CI/CD (GitHub Actions)
+
+Two workflows are configured under `.github/workflows`:
+
+- `ci.yml`: runs on pushes and PRs to `development`, installs with Bun, then runs `lint`, `format:check`, `test`, and `build`.
+- `vercel-deploy.yml`: runs on pushes to `development` and `main`, installs with Bun, then deploys to Vercel using `amondnet/vercel-action@v25`. Deploys to production on `main`, and preview on `development`.
+
+Required repository secrets for Vercel deploy:
+
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID`
+
+Optional repository secret for higher GitHub API rate limits:
+
+- `GH_API_TOKEN`
+
+Branch model:
+
+- `development`: CI + Vercel preview deployments
+- `main`: Vercel production deployments
+
+## Git Hooks (Husky)
+
+Husky is set up in `.husky/` with these hooks:
+
+- `pre-commit`: `bun run lint` and `bun run format:check`
+- `commit-msg`: `commitlint` to enforce Conventional Commits
+- `pre-push`: `bun run test` and `bun run build`
 
 ## Architecture (Brief)
 

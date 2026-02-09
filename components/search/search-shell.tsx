@@ -37,6 +37,8 @@ export default function SearchShell({
   showSearchButton = true,
   showSearchIcon = true,
   liveSearch = false,
+  debounceMs = 400,
+  minSearchLength = 0,
   tabMode = "link",
   onSearchSubmit,
   onQueryChange,
@@ -54,6 +56,8 @@ export default function SearchShell({
   showSearchButton?: boolean;
   showSearchIcon?: boolean;
   liveSearch?: boolean;
+  debounceMs?: number;
+  minSearchLength?: number;
   tabMode?: "link" | "button";
   onSearchSubmit?: (query: string, type: SearchType) => void;
   onQueryChange?: (query: string) => void;
@@ -116,6 +120,9 @@ export default function SearchShell({
     }
     searchTimerRef.current = window.setTimeout(() => {
       const trimmed = query.trim();
+      if (trimmed && trimmed.length < minSearchLength) {
+        return;
+      }
       if (onSearchSubmit) {
         onSearchSubmit(trimmed, type);
         return;
@@ -132,13 +139,23 @@ export default function SearchShell({
         if (next === currentParams.toString()) return;
         router.push(`/?${next}`);
       });
-    }, 400);
+    }, debounceMs);
     return () => {
       if (searchTimerRef.current) {
         window.clearTimeout(searchTimerRef.current);
       }
     };
-  }, [liveSearch, onSearchSubmit, query, router, searchParams, startTransition, type]);
+  }, [
+    debounceMs,
+    liveSearch,
+    minSearchLength,
+    onSearchSubmit,
+    query,
+    router,
+    searchParams,
+    startTransition,
+    type,
+  ]);
 
   return (
     <section className="w-full flex flex-col gap-5">
